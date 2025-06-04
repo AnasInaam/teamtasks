@@ -1,107 +1,45 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, SortAsc, Grid, List } from 'lucide-react';
+import { Plus, Search, Filter, SortAsc, Grid, List, AlertCircle } from 'lucide-react';
 import ProjectCard from '../components/ui/ProjectCard';
-
-// Mock data
-const mockProjects = [
-  {
-    id: '1',
-    name: 'Website Redesign',
-    description: 'Complete overhaul of the company website with a modern design and improved user experience.',
-    teamName: 'Design Team',
-    progress: 75,
-    dueDate: '2025-06-15',
-    taskCount: 12,
-    teamMembers: [
-      { id: '1', name: 'John Doe', avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '2', name: 'Jane Smith', avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '4', name: 'Sarah Wilson', avatar: 'https://images.pexels.com/photos/1987301/pexels-photo-1987301.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Mobile App Development',
-    description: 'Building a cross-platform mobile application for iOS and Android using React Native.',
-    teamName: 'Engineering',
-    progress: 40,
-    dueDate: '2025-07-30',
-    taskCount: 24,
-    teamMembers: [
-      { id: '3', name: 'Mike Johnson', avatar: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '5', name: 'Alex Brown', avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '6', name: 'Emma Davis', avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '7', name: 'Chris Lee', avatar: 'https://images.pexels.com/photos/937481/pexels-photo-937481.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Product Launch',
-    description: 'Coordinating the launch of our new product including marketing materials, press releases, and event planning.',
-    teamName: 'Marketing',
-    progress: 25,
-    dueDate: '2025-08-10',
-    taskCount: 18,
-    teamMembers: [
-      { id: '1', name: 'John Doe', avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '4', name: 'Sarah Wilson', avatar: 'https://images.pexels.com/photos/1987301/pexels-photo-1987301.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '8', name: 'Jessica Taylor', avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-    ],
-  },
-  {
-    id: '4',
-    name: 'API Development',
-    description: 'Building a RESTful API for third-party integrations and mobile applications.',
-    teamName: 'Engineering',
-    progress: 60,
-    dueDate: '2025-06-30',
-    taskCount: 15,
-    teamMembers: [
-      { id: '3', name: 'Mike Johnson', avatar: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '7', name: 'Chris Lee', avatar: 'https://images.pexels.com/photos/937481/pexels-photo-937481.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-    ],
-  },
-  {
-    id: '5',
-    name: 'Customer Research',
-    description: 'Conducting user interviews and gathering feedback to inform product development.',
-    teamName: 'Design Team',
-    progress: 85,
-    dueDate: '2025-05-31',
-    taskCount: 9,
-    teamMembers: [
-      { id: '2', name: 'Jane Smith', avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '8', name: 'Jessica Taylor', avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-    ],
-  },
-  {
-    id: '6',
-    name: 'Database Migration',
-    description: 'Migrating from MySQL to PostgreSQL with minimal downtime and data integrity.',
-    teamName: 'Engineering',
-    progress: 30,
-    dueDate: '2025-07-15',
-    taskCount: 11,
-    teamMembers: [
-      { id: '5', name: 'Alex Brown', avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '7', name: 'Chris Lee', avatar: 'https://images.pexels.com/photos/937481/pexels-photo-937481.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-    ],
-  },
-];
-
-// View modes
-type ViewMode = 'grid' | 'list';
+import { useProjects } from '../hooks/useProjects';
 
 const Projects: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { projects, isLoading, error } = useProjects();
   
   // Filter projects based on search term
-  const filteredProjects = mockProjects.filter(project => 
+  const filteredProjects = projects?.filter(project => 
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    project.teamName.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    (project.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
+    project.team.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-12 w-12 rounded-full bg-primary-500 mb-4"></div>
+          <div className="h-4 w-32 bg-gray-300 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="mx-auto w-24 h-24 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+          <AlertCircle size={48} className="text-red-600 dark:text-red-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Error loading projects</h3>
+        <p className="text-gray-500 dark:text-gray-400">
+          {error instanceof Error ? error.message : 'An unexpected error occurred'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -185,7 +123,23 @@ const Projects: React.FC = () => {
             : 'grid-cols-1'
         }`}>
           {filteredProjects.map((project) => (
-            <ProjectCard key={project.id} project={project} />
+            <ProjectCard
+              key={project.id}
+              project={{
+                id: project.id,
+                name: project.name,
+                description: project.description || undefined,
+                teamName: project.team.name,
+                progress: project.progress || 0,
+                dueDate: project.due_date,
+                taskCount: 0, // We'll need to add this to the query
+                teamMembers: project.members.map(member => ({
+                  id: member.user.id,
+                  name: member.user.name,
+                  avatar: member.user.avatar_url || undefined
+                }))
+              }}
+            />
           ))}
         </div>
       ) : (
