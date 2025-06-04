@@ -1,89 +1,43 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Search, Filter, SortAsc, Grid, List, Users } from 'lucide-react';
-
-// Mock data
-const mockTeams = [
-  {
-    id: '1',
-    name: 'Design Team',
-    description: 'Responsible for product design, user experience, and brand identity.',
-    memberCount: 8,
-    projectCount: 5,
-    leader: {
-      id: '1',
-      name: 'John Doe',
-      avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2',
-      role: 'Design Director',
-    },
-    members: [
-      { id: '1', name: 'John Doe', avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2', role: 'Design Director' },
-      { id: '2', name: 'Jane Smith', avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2', role: 'Senior Designer' },
-      { id: '4', name: 'Sarah Wilson', avatar: 'https://images.pexels.com/photos/1987301/pexels-photo-1987301.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2', role: 'UI Designer' },
-    ],
-    recentProjects: [
-      { id: '1', name: 'Website Redesign' },
-      { id: '5', name: 'Customer Research' },
-    ],
-  },
-  {
-    id: '2',
-    name: 'Engineering',
-    description: 'Core development team responsible for building and maintaining our products.',
-    memberCount: 12,
-    projectCount: 8,
-    leader: {
-      id: '3',
-      name: 'Mike Johnson',
-      avatar: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2',
-      role: 'Tech Lead',
-    },
-    members: [
-      { id: '3', name: 'Mike Johnson', avatar: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2', role: 'Tech Lead' },
-      { id: '5', name: 'Alex Brown', avatar: 'https://images.pexels.com/photos/1222271/pexels-photo-1222271.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2', role: 'Senior Developer' },
-      { id: '7', name: 'Chris Lee', avatar: 'https://images.pexels.com/photos/937481/pexels-photo-937481.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2', role: 'Backend Developer' },
-    ],
-    recentProjects: [
-      { id: '2', name: 'Mobile App' },
-      { id: '4', name: 'API Development' },
-      { id: '6', name: 'Database Migration' },
-    ],
-  },
-  {
-    id: '3',
-    name: 'Marketing',
-    description: 'Handles product marketing, communications, and growth initiatives.',
-    memberCount: 6,
-    projectCount: 4,
-    leader: {
-      id: '8',
-      name: 'Jessica Taylor',
-      avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2',
-      role: 'Marketing Director',
-    },
-    members: [
-      { id: '8', name: 'Jessica Taylor', avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2', role: 'Marketing Director' },
-      { id: '4', name: 'Sarah Wilson', avatar: 'https://images.pexels.com/photos/1987301/pexels-photo-1987301.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2', role: 'Content Strategist' },
-      { id: '6', name: 'Emma Davis', avatar: 'https://images.pexels.com/photos/1036623/pexels-photo-1036623.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2', role: 'Social Media Manager' },
-    ],
-    recentProjects: [
-      { id: '3', name: 'Product Launch' },
-    ],
-  },
-];
-
-// View modes
-type ViewMode = 'grid' | 'list';
+import { useTeams } from '../hooks/useTeams';
 
 const Teams: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const { teams, isLoading, error } = useTeams();
   
   // Filter teams based on search term
-  const filteredTeams = mockTeams.filter(team => 
+  const filteredTeams = teams?.filter(team => 
     team.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    team.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    (team.description?.toLowerCase().includes(searchTerm.toLowerCase()))
+  ) || [];
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-12 w-12 rounded-full bg-primary-500 mb-4"></div>
+          <div className="h-4 w-32 bg-gray-300 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="mx-auto w-24 h-24 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+          <AlertCircle size={48} className="text-red-600 dark:text-red-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Error loading teams</h3>
+        <p className="text-gray-500 dark:text-gray-400">
+          {error instanceof Error ? error.message : 'An unexpected error occurred'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -178,58 +132,38 @@ const Teams: React.FC = () => {
                     {team.name}
                   </h3>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
-                    Led by {team.leader.name}
+                    {team.members?.[0]?.user?.name ? `Led by ${team.members[0].user.name}` : 'No leader assigned'}
                   </p>
                 </div>
                 <div className="bg-primary-100 dark:bg-primary-900/30 px-3 py-1 rounded-full text-xs font-medium text-primary-800 dark:text-primary-300">
-                  {team.memberCount} members
+                  {team.members?.length || 0} members
                 </div>
               </div>
               
-              <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                {team.description}
-              </p>
+              {team.description && (
+                <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                  {team.description}
+                </p>
+              )}
               
               <div className="flex items-center justify-between mb-4">
                 <div className="flex -space-x-2">
-                  {team.members.map((member) => (
+                  {team.members?.slice(0, 3).map((member) => (
                     <img
-                      key={member.id}
-                      src={member.avatar}
-                      alt={member.name}
-                      title={`${member.name} - ${member.role}`}
+                      key={member.user.id}
+                      src={member.user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.user.name)}&background=random`}
+                      alt={member.user.name}
+                      title={`${member.user.name} - ${member.user.role || 'Member'}`}
                       className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800"
                     />
                   ))}
-                  {team.memberCount > 3 && (
+                  {(team.members?.length || 0) > 3 && (
                     <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400 border-2 border-white dark:border-gray-800">
-                      +{team.memberCount - 3}
+                      +{team.members!.length - 3}
                     </div>
                   )}
                 </div>
-                
-                <div className="text-sm text-gray-500 dark:text-gray-400">
-                  {team.projectCount} projects
-                </div>
               </div>
-              
-              {team.recentProjects.length > 0 && (
-                <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                  <h4 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                    Recent Projects
-                  </h4>
-                  <div className="space-y-1">
-                    {team.recentProjects.map((project) => (
-                      <div
-                        key={project.id}
-                        className="text-sm text-gray-600 dark:text-gray-300"
-                      >
-                        {project.name}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
             </Link>
           ))}
         </div>
