@@ -7,13 +7,15 @@ type Project = Database['public']['Tables']['projects']['Row'];
 type ProjectWithTeam = Project & {
   team: {
     name: string;
+    members: Array<{
+      user: {
+        id: string;
+        name: string;
+        avatar_url: string | null;
+        role: string | null;
+      };
+    }>;
   };
-  members: Array<{
-    id: string;
-    name: string;
-    avatar_url: string | null;
-    role: string | null;
-  }>;
 };
 
 export function useProjects(teamId?: string) {
@@ -45,13 +47,15 @@ export function useProjects(teamId?: string) {
         .from('projects')
         .select(`
           *,
-          team:teams(name),
-          members:team_members(
-            user:profiles(
-              id,
-              name,
-              avatar_url,
-              role
+          team:teams(
+            name,
+            members:team_members(
+              user:profiles(
+                id,
+                name,
+                avatar_url,
+                role
+              )
             )
           )
         `);

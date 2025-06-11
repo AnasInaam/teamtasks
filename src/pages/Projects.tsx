@@ -133,7 +133,7 @@ const Projects: React.FC = () => {
                 progress: project.progress || 0,
                 dueDate: project.due_date,
                 taskCount: 0, // We'll need to add this to the query
-                teamMembers: project.members.map(member => ({
+                teamMembers: project.team.members.map(member => ({
                   id: member.user.id,
                   name: member.user.name,
                   avatar: member.user.avatar_url || undefined
