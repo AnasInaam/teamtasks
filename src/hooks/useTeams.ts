@@ -6,10 +6,12 @@ import type { Database } from '../lib/database.types';
 type Team = Database['public']['Tables']['teams']['Row'];
 type TeamWithMembers = Team & {
   members: Array<{
-    id: string;
-    name: string;
-    avatar_url: string | null;
-    role: string | null;
+    user: {
+      id: string;
+      name: string;
+      avatar_url: string | null;
+      role: string | null;
+    };
   }>;
 };
 
@@ -61,20 +63,37 @@ export function useTeams() {
   // Create team
   const createTeam = useMutation({
     mutationFn: async (newTeam: { name: string; description?: string }) => {
-      const { data, error } = await supabase
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
+
+      const { data: team, error: teamError } = await supabase
         .from('teams')
         .insert([
           {
             name: newTeam.name,
             description: newTeam.description,
-            created_by: (await supabase.auth.getUser()).data.user?.id
+            created_by: user.user.id
           }
         ])
         .select()
         .single();
 
-      if (error) throw error;
-      return data;
+      if (teamError) throw teamError;
+
+      // Add the creator as a team member with leader role
+      const { error: memberError } = await supabase
+        .from('team_members')
+        .insert([
+          {
+            team_id: team.id,
+            user_id: user.user.id,
+            role: 'leader'
+          }
+        ]);
+
+      if (memberError) throw memberError;
+
+      return team;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['teams'] });

@@ -15,7 +15,7 @@ type ProjectWithTeam = Project & {
         role: string | null;
       };
     }>;
-  };
+  } | null;
 };
 
 export function useProjects(teamId?: string) {
@@ -69,7 +69,7 @@ export function useProjects(teamId?: string) {
       if (error) throw error;
       return data as ProjectWithTeam[];
     },
-    enabled: !teamId || !!teamId
+    enabled: true
   });
 
   // Create project
@@ -81,6 +81,9 @@ export function useProjects(teamId?: string) {
       startDate?: Date;
       dueDate?: Date;
     }) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
+
       const { data, error } = await supabase
         .from('projects')
         .insert([
@@ -90,7 +93,7 @@ export function useProjects(teamId?: string) {
             team_id: newProject.teamId,
             start_date: newProject.startDate?.toISOString(),
             due_date: newProject.dueDate?.toISOString(),
-            created_by: (await supabase.auth.getUser()).data.user?.id
+            created_by: user.user.id
           }
         ])
         .select()
@@ -100,7 +103,7 @@ export function useProjects(teamId?: string) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     }
   });
 
@@ -118,7 +121,7 @@ export function useProjects(teamId?: string) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     }
   });
 
@@ -133,7 +136,7 @@ export function useProjects(teamId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['projects', teamId] });
+      queryClient.invalidateQueries({ queryKey: ['projects'] });
     }
   });
 

@@ -6,10 +6,12 @@ import type { Database } from '../lib/database.types';
 type Task = Database['public']['Tables']['tasks']['Row'];
 type TaskWithAssignees = Task & {
   assignees: Array<{
-    id: string;
-    name: string;
-    avatar_url: string | null;
-    role: string | null;
+    user: {
+      id: string;
+      name: string;
+      avatar_url: string | null;
+      role: string | null;
+    };
   }>;
 };
 
@@ -61,7 +63,7 @@ export function useTasks(projectId?: string) {
       if (error) throw error;
       return data as TaskWithAssignees[];
     },
-    enabled: !projectId || !!projectId
+    enabled: true
   });
 
   // Create task
@@ -75,6 +77,9 @@ export function useTasks(projectId?: string) {
       dueDate?: Date;
       assigneeIds?: string[];
     }) => {
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) throw new Error('User not authenticated');
+
       const { data: task, error: taskError } = await supabase
         .from('tasks')
         .insert([
@@ -85,7 +90,7 @@ export function useTasks(projectId?: string) {
             status: newTask.status || 'todo',
             priority: newTask.priority || 'medium',
             due_date: newTask.dueDate?.toISOString(),
-            created_by: (await supabase.auth.getUser()).data.user?.id
+            created_by: user.user.id
           }
         ])
         .select()
@@ -109,7 +114,7 @@ export function useTasks(projectId?: string) {
       return task;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   });
 
@@ -127,7 +132,7 @@ export function useTasks(projectId?: string) {
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   });
 
@@ -142,7 +147,7 @@ export function useTasks(projectId?: string) {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
     }
   });
 

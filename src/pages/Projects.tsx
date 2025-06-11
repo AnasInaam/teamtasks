@@ -13,7 +13,7 @@ const Projects: React.FC = () => {
   const filteredProjects = projects?.filter(project => 
     project.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
     (project.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    project.team.name.toLowerCase().includes(searchTerm.toLowerCase())
+    (project.team?.name.toLowerCase().includes(searchTerm.toLowerCase()))
   ) || [];
 
   if (isLoading) {
@@ -129,15 +129,15 @@ const Projects: React.FC = () => {
                 id: project.id,
                 name: project.name,
                 description: project.description || undefined,
-                teamName: project.team.name,
+                teamName: project.team?.name || 'No Team',
                 progress: project.progress || 0,
                 dueDate: project.due_date,
                 taskCount: 0, // We'll need to add this to the query
-                teamMembers: project.team.members.map(member => ({
+                teamMembers: project.team?.members?.map(member => ({
                   id: member.user.id,
                   name: member.user.name,
                   avatar: member.user.avatar_url || undefined
-                }))
+                })) || []
               }}
             />
           ))}
@@ -149,14 +149,24 @@ const Projects: React.FC = () => {
           </div>
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">No projects found</h3>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            We couldn't find any projects matching your search.
+            {searchTerm ? "We couldn't find any projects matching your search." : "Get started by creating your first project."}
           </p>
-          <button
-            onClick={() => setSearchTerm('')}
-            className="btn btn-secondary"
-          >
-            Clear filters
-          </button>
+          {searchTerm ? (
+            <button
+              onClick={() => setSearchTerm('')}
+              className="btn btn-secondary"
+            >
+              Clear filters
+            </button>
+          ) : (
+            <Link
+              to="/projects/new"
+              className="btn btn-primary"
+            >
+              <Plus size={18} className="mr-1" />
+              Create Project
+            </Link>
+          )}
         </div>
       )}
     </div>
