@@ -11,8 +11,12 @@ import AuthLayout from './layouts/AuthLayout';
 import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
+import CreateProject from './pages/CreateProject';
 import Teams from './pages/Teams';
 import TeamDetails from './pages/TeamDetails';
+import CreateTeam from './pages/CreateTeam';
+import Tasks from './pages/Tasks';
+import Calendar from './pages/Calendar';
 import KanbanBoard from './pages/KanbanBoard';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
@@ -61,9 +65,13 @@ function App() {
           <Route element={<MainLayout />}>
             <Route path="/" element={<Dashboard />} />
             <Route path="/projects" element={<Projects />} />
+            <Route path="/projects/new" element={<CreateProject />} />
             <Route path="/projects/:id" element={<ProjectDetails />} />
             <Route path="/teams" element={<Teams />} />
+            <Route path="/teams/new" element={<CreateTeam />} />
             <Route path="/teams/:id" element={<TeamDetails />} />
+            <Route path="/tasks" element={<Tasks />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="/kanban/:projectId" element={<KanbanBoard />} />
           </Route>
           

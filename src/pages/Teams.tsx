@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, SortAsc, Grid, List, Users } from 'lucide-react';
+import { Plus, Search, Filter, SortAsc, Grid, List, Users, AlertCircle } from 'lucide-react';
 import { useTeams } from '../hooks/useTeams';
 
 const Teams: React.FC = () => {
