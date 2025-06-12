@@ -1,3 +1,9 @@
+// TODO: This Sidebar currently uses mock data for teams and projects.
+// - Replace all mockTeams and mockProjects with real data from Supabase.
+// - Implement data fetching using hooks and display loading/error states.
+// - Add backend-connected actions for adding teams/projects, etc.
+// - Remove this comment after full backend integration.
+
 import React, { useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import {
@@ -32,19 +38,9 @@ interface Project {
   teamId: string;
 }
 
-// Mock data
-const mockTeams: Team[] = [
-  { id: '1', name: 'Design Team' },
-  { id: '2', name: 'Engineering' },
-  { id: '3', name: 'Marketing' },
-];
-
-const mockProjects: Project[] = [
-  { id: '1', name: 'Website Redesign', teamId: '1' },
-  { id: '2', name: 'Mobile App', teamId: '2' },
-  { id: '3', name: 'Product Launch', teamId: '3' },
-  { id: '4', name: 'API Development', teamId: '2' },
-];
+// TODO: Connect to backend for teams and projects data
+// const mockTeams: Team[] = [...];
+// const mockProjects: Project[] = [...];
 
 const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { logout, user } = useAuth();

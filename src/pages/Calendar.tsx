@@ -1,3 +1,9 @@
+// TODO: This Calendar page currently lacks real data integration.
+// - Replace all mockEvents and related mock data with real data from Supabase.
+// - Implement data fetching using hooks and display loading/error states.
+// - Add backend-connected actions for adding/editing events, deadlines, etc.
+// - Remove this comment after full backend integration.
+
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, Users } from 'lucide-react';
 
@@ -16,56 +22,8 @@ interface CalendarEvent {
   project?: string;
 }
 
-// Mock events
-const mockEvents: CalendarEvent[] = [
-  {
-    id: '1',
-    title: 'Weekly Project Review',
-    date: '2025-05-26',
-    time: '10:00',
-    duration: 60,
-    type: 'meeting',
-    attendees: [
-      { id: '1', name: 'John Doe', avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '2', name: 'Jane Smith', avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-    ],
-    project: 'Website Redesign'
-  },
-  {
-    id: '2',
-    title: 'Design System Review',
-    date: '2025-05-27',
-    time: '14:30',
-    duration: 45,
-    type: 'meeting',
-    attendees: [
-      { id: '1', name: 'John Doe', avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-    ],
-    project: 'Website Redesign'
-  },
-  {
-    id: '3',
-    title: 'Project Deadline',
-    date: '2025-05-30',
-    time: '23:59',
-    duration: 0,
-    type: 'deadline',
-    project: 'Mobile App'
-  },
-  {
-    id: '4',
-    title: 'Team Standup',
-    date: '2025-05-28',
-    time: '09:00',
-    duration: 30,
-    type: 'meeting',
-    attendees: [
-      { id: '1', name: 'John Doe', avatar: 'https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '2', name: 'Jane Smith', avatar: 'https://images.pexels.com/photos/1239291/pexels-photo-1239291.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-      { id: '3', name: 'Mike Johnson', avatar: 'https://images.pexels.com/photos/2379005/pexels-photo-2379005.jpeg?auto=compress&cs=tinysrgb&w=50&h=50&dpr=2' },
-    ]
-  }
-];
+// TODO: Connect to backend for events data
+// const mockEvents: CalendarEvent[] = [...];
 
 const Calendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());

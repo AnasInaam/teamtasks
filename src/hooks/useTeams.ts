@@ -15,7 +15,14 @@ type TeamWithMembers = Team & {
   }>;
 };
 
-export function useTeams() {
+export interface UseTeamsOptions {
+  page?: number;
+  pageSize?: number;
+  searchTerm?: string;
+}
+
+export function useTeams(options: UseTeamsOptions = {}) {
+  const { page = 1, pageSize = 10, searchTerm } = options;
   const queryClient = useQueryClient();
 
   // Subscribe to real-time changes
@@ -26,21 +33,21 @@ export function useTeams() {
         event: '*',
         schema: 'public',
         table: 'teams'
-      }, (payload) => {
-        queryClient.invalidateQueries({ queryKey: ['teams'] });
+      }, (_payload: any) => {
+        queryClient.invalidateQueries({ queryKey: ['teams', options] });
       })
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [queryClient]);
+  }, [queryClient, options]);
 
-  // Fetch teams
+  // Fetch teams with pagination and filtering
   const { data: teams, isLoading, error } = useQuery({
-    queryKey: ['teams'],
+    queryKey: ['teams', options],
     queryFn: async () => {
-      const { data: teams, error } = await supabase
+      let query = supabase
         .from('teams')
         .select(`
           *,
@@ -54,9 +61,19 @@ export function useTeams() {
           )
         `);
 
-      if (error) throw error;
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
+      // Pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
 
-      return teams as TeamWithMembers[];
+      const { data, error } = await query;
+      if (error) {
+        throw new Error(error.message || 'Failed to fetch teams');
+      }
+      return data as TeamWithMembers[];
     }
   });
 

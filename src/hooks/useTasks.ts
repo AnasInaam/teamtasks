@@ -15,7 +15,16 @@ type TaskWithAssignees = Task & {
   }>;
 };
 
-export function useTasks(projectId?: string) {
+export interface UseTasksOptions {
+  page?: number;
+  pageSize?: number;
+  status?: string;
+  searchTerm?: string;
+  projectId?: string;
+}
+
+export function useTasks(options: UseTasksOptions = {}) {
+  const { page = 1, pageSize = 10, status, searchTerm, projectId } = options;
   const queryClient = useQueryClient();
 
   // Subscribe to real-time changes
@@ -26,19 +35,19 @@ export function useTasks(projectId?: string) {
         event: '*',
         schema: 'public',
         table: 'tasks'
-      }, (payload) => {
-        queryClient.invalidateQueries({ queryKey: ['tasks', projectId] });
+      }, (_payload: any) => {
+        queryClient.invalidateQueries({ queryKey: ['tasks', options] });
       })
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [queryClient, projectId]);
+  }, [queryClient, options]);
 
-  // Fetch tasks
+  // Fetch tasks with pagination and filtering
   const { data: tasks, isLoading, error } = useQuery({
-    queryKey: ['tasks', projectId],
+    queryKey: ['tasks', options],
     queryFn: async () => {
       let query = supabase
         .from('tasks')
@@ -57,10 +66,22 @@ export function useTasks(projectId?: string) {
       if (projectId) {
         query = query.eq('project_id', projectId);
       }
+      if (status) {
+        query = query.eq('status', status);
+      }
+      if (searchTerm) {
+        query = query.ilike('title', `%${searchTerm}%`);
+      }
+      // Pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
 
       const { data, error } = await query;
-
-      if (error) throw error;
+      if (error) {
+        // Improved error handling
+        throw new Error(error.message || 'Failed to fetch tasks');
+      }
       return data as TaskWithAssignees[];
     },
     enabled: true

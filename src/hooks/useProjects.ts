@@ -18,7 +18,15 @@ type ProjectWithTeam = Project & {
   } | null;
 };
 
-export function useProjects(teamId?: string) {
+export interface UseProjectsOptions {
+  page?: number;
+  pageSize?: number;
+  searchTerm?: string;
+  teamId?: string;
+}
+
+export function useProjects(options: UseProjectsOptions = {}) {
+  const { page = 1, pageSize = 10, searchTerm, teamId } = options;
   const queryClient = useQueryClient();
 
   // Subscribe to real-time changes
@@ -29,19 +37,19 @@ export function useProjects(teamId?: string) {
         event: '*',
         schema: 'public',
         table: 'projects'
-      }, (payload) => {
-        queryClient.invalidateQueries({ queryKey: ['projects', teamId] });
+      }, (_payload: any) => {
+        queryClient.invalidateQueries({ queryKey: ['projects', options] });
       })
       .subscribe();
 
     return () => {
       subscription.unsubscribe();
     };
-  }, [queryClient, teamId]);
+  }, [queryClient, options]);
 
-  // Fetch projects
+  // Fetch projects with pagination and filtering
   const { data: projects, isLoading, error } = useQuery({
-    queryKey: ['projects', teamId],
+    queryKey: ['projects', options],
     queryFn: async () => {
       let query = supabase
         .from('projects')
@@ -63,10 +71,18 @@ export function useProjects(teamId?: string) {
       if (teamId) {
         query = query.eq('team_id', teamId);
       }
+      if (searchTerm) {
+        query = query.ilike('name', `%${searchTerm}%`);
+      }
+      // Pagination
+      const from = (page - 1) * pageSize;
+      const to = from + pageSize - 1;
+      query = query.range(from, to);
 
       const { data, error } = await query;
-
-      if (error) throw error;
+      if (error) {
+        throw new Error(error.message || 'Failed to fetch projects');
+      }
       return data as ProjectWithTeam[];
     },
     enabled: true
