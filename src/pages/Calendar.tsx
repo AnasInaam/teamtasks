@@ -6,6 +6,7 @@
 
 import React, { useState } from 'react';
 import { ChevronLeft, ChevronRight, Plus, Calendar as CalendarIcon, Clock, Users } from 'lucide-react';
+import { useTasks } from '../hooks/useTasks';
 
 interface CalendarEvent {
   id: string;
@@ -22,9 +23,6 @@ interface CalendarEvent {
   project?: string;
 }
 
-// TODO: Connect to backend for events data
-// const mockEvents: CalendarEvent[] = [...];
-
 const Calendar: React.FC = () => {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [view, setView] = useState<'month' | 'week' | 'day'>('month');
@@ -33,7 +31,28 @@ const Calendar: React.FC = () => {
   const today = new Date();
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
-  
+
+  // Fetch all tasks (as events)
+  const { tasks, isLoading, error } = useTasks({ page: 1, pageSize: 500 });
+
+  // Convert tasks to events (only those with due dates)
+  const events = (tasks || [])
+    .filter(task => !!task.due_date)
+    .map(task => ({
+      id: task.id,
+      title: task.title,
+      date: task.due_date ? task.due_date.split('T')[0] : '', // always string
+      time: task.due_date ? new Date(task.due_date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '',
+      duration: 0,
+      type: 'deadline' as const,
+      attendees: task.assignees?.map(a => ({
+        id: a.user.id,
+        name: a.user.name,
+        avatar: a.user.avatar_url || undefined
+      })) || [],
+      project: task.project_id
+    }));
+
   // Get first day of month and number of days
   const firstDay = new Date(year, month, 1);
   const lastDay = new Date(year, month + 1, 0);
@@ -69,7 +88,7 @@ const Calendar: React.FC = () => {
   // Get events for a specific date
   const getEventsForDate = (day: number) => {
     const dateString = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    return mockEvents.filter(event => event.date === dateString);
+    return events.filter(event => event.date === dateString);
   };
 
   // Format month name
@@ -93,6 +112,30 @@ const Calendar: React.FC = () => {
         return 'bg-gray-500';
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-12 w-12 rounded-full bg-primary-500 mb-4"></div>
+          <div className="h-4 w-32 bg-gray-300 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+  if (error) {
+    return (
+      <div className="text-center py-12">
+        <div className="mx-auto w-24 h-24 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+          <CalendarIcon size={48} className="text-red-600 dark:text-red-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Error loading calendar events</h3>
+        <p className="text-gray-500 dark:text-gray-400">
+          {error instanceof Error ? error.message : 'An unexpected error occurred'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -220,7 +263,7 @@ const Calendar: React.FC = () => {
                       {events.slice(0, 2).map((event) => (
                         <div
                           key={event.id}
-                          className={`text-xs p-1 rounded text-white truncate ${getEventTypeColor(event.type)}`}
+                          className={`text-xs p-1 rounded text-white truncate ${getEventTypeColor(event.type as 'meeting' | 'deadline' | 'reminder')}`}
                           title={`${event.title} - ${event.time}`}
                         >
                           {event.title}
@@ -248,20 +291,20 @@ const Calendar: React.FC = () => {
           </h2>
           
           <div className="space-y-4">
-            {mockEvents
+            {events
               .filter(event => new Date(event.date) >= today)
               .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
               .slice(0, 5)
               .map((event) => (
                 <div key={event.id} className="flex items-start space-x-3 p-3 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-                  <div className={`w-3 h-3 rounded-full mt-2 ${getEventTypeColor(event.type)}`}></div>
+                  <div className={`w-3 h-3 rounded-full mt-2 ${getEventTypeColor(event.type as 'meeting' | 'deadline' | 'reminder')}`}></div>
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900 dark:text-white">
                       {event.title}
                     </h3>
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400 mt-1">
                       <CalendarIcon size={14} className="mr-1" />
-                      {new Date(event.date).toLocaleDateString()}
+                      {new Date(event.date || '').toLocaleDateString()}
                       <Clock size={14} className="ml-3 mr-1" />
                       {event.time}
                       {event.duration > 0 && ` (${event.duration} min)`}
