@@ -18,13 +18,14 @@ const Tasks: React.FC = () => {
   // Reset page when filters/search change
   React.useEffect(() => { setPage(1); }, [searchTerm, statusFilter, priorityFilter]);
 
-  const { tasks, isLoading, error } = useTasks({
+  const { tasks, isLoading, error, deleteTask } = useTasks({
     page,
     pageSize,
     searchTerm: searchTerm.trim() || undefined,
     status: statusFilter !== 'all' ? statusFilter : undefined,
     // priority: priorityFilter !== 'all' ? priorityFilter : undefined, // Uncomment if backend supports priority filtering
   });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Group tasks by status for stats
   const taskStats: Record<TaskStatus, number> = {
@@ -42,6 +43,17 @@ const Tasks: React.FC = () => {
   // Pagination controls
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => p + 1);
+
+  // Delete handler
+  const handleDelete = async (taskId: string) => {
+    if (!window.confirm('Are you sure you want to delete this task? This action cannot be undone.')) return;
+    setDeletingId(taskId);
+    try {
+      await deleteTask.mutateAsync(taskId);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -221,24 +233,42 @@ const Tasks: React.FC = () => {
               : 'grid-cols-1'
           }`}>
             {tasks.map((task) => (
-              <TaskCard
-                key={task.id}
-                task={{
-                  id: task.id,
-                  title: task.title,
-                  description: task.description || undefined,
-                  status: task.status as TaskStatus,
-                  priority: task.priority as TaskPriority,
-                  dueDate: task.due_date || undefined,
-                  assignees: task.assignees.map(assignee => ({
-                    id: assignee.user.id,
-                    name: assignee.user.name,
-                    avatar: assignee.user.avatar_url || undefined
-                  })),
-                  commentCount: 0, // We'll need to add this to the query
-                  attachmentCount: 0 // We'll need to add this to the query
-                }}
-              />
+              <div key={task.id} className="relative group">
+                <TaskCard
+                  task={{
+                    id: task.id,
+                    title: task.title,
+                    description: task.description || undefined,
+                    status: task.status as TaskStatus,
+                    priority: task.priority as TaskPriority,
+                    dueDate: task.due_date || undefined,
+                    assignees: task.assignees.map(assignee => ({
+                      id: assignee.user.id,
+                      name: assignee.user.name,
+                      avatar: assignee.user.avatar_url || undefined
+                    })),
+                    commentCount: 0, // We'll need to add this to the query
+                    attachmentCount: 0 // We'll need to add this to the query
+                  }}
+                />
+                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <Link
+                    to={`/tasks/${task.id}/edit`}
+                    className="btn btn-xs btn-secondary"
+                    title="Edit Task"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    className="btn btn-xs btn-danger"
+                    title="Delete Task"
+                    disabled={deletingId === task.id}
+                    onClick={() => handleDelete(task.id)}
+                  >
+                    {deletingId === task.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
           {/* Pagination Controls */}

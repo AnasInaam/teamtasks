@@ -23,6 +23,7 @@ import KanbanBoard from './pages/KanbanBoard';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import NotFound from './pages/NotFound';
+import EditTask from './pages/EditTask';
 
 function App() {
   const location = useLocation();
@@ -75,6 +76,7 @@ function App() {
             <Route path="/teams/:id" element={<TeamDetails />} />
             <Route path="/teams/:id/edit" element={<EditTeam />} />
             <Route path="/tasks" element={<Tasks />} />
+            <Route path="/tasks/:id/edit" element={<EditTask />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/kanban/:projectId" element={<KanbanBoard />} />
           </Route>
