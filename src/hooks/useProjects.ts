@@ -16,6 +16,7 @@ type ProjectWithTeam = Project & {
       };
     }>;
   } | null;
+  taskCount?: number;
 };
 
 export interface UseProjectsOptions {
@@ -51,6 +52,7 @@ export function useProjects(options: UseProjectsOptions = {}) {
   const { data: projects, isLoading, error } = useQuery({
     queryKey: ['projects', options],
     queryFn: async () => {
+      // Fetch projects with team info
       let query = supabase
         .from('projects')
         .select(`
@@ -83,7 +85,21 @@ export function useProjects(options: UseProjectsOptions = {}) {
       if (error) {
         throw new Error(error.message || 'Failed to fetch projects');
       }
-      return data as ProjectWithTeam[];
+      // For each project, fetch the task count
+      const projectIds = (data as ProjectWithTeam[]).map(p => p.id);
+      let taskCounts: Record<string, number> = {};
+      if (projectIds.length > 0) {
+        const { data: taskCountData, error: taskCountError } = await supabase
+          .from('tasks')
+          .select('project_id, count:id', { groupBy: 'project_id' })
+          .in('project_id', projectIds);
+        if (!taskCountError && Array.isArray(taskCountData)) {
+          for (const row of taskCountData) {
+            taskCounts[row.project_id] = row.count;
+          }
+        }
+      }
+      return (data as ProjectWithTeam[]).map(p => ({ ...p, taskCount: taskCounts[p.id] || 0 }));
     },
     enabled: true
   });

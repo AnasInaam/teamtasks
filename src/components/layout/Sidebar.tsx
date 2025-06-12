@@ -19,6 +19,8 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useTeams } from '../../hooks/useTeams';
+import { useProjects } from '../../hooks/useProjects';
 
 // Sidebar Props
 interface SidebarProps {
@@ -38,15 +40,14 @@ interface Project {
   teamId: string;
 }
 
-// TODO: Connect to backend for teams and projects data
-// const mockTeams: Team[] = [...];
-// const mockProjects: Project[] = [...];
-
 const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
   const { logout, user } = useAuth();
-  const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>({
-    '1': true, // First team expanded by default
-  });
+  const [expandedTeams, setExpandedTeams] = useState<Record<string, boolean>>({});
+
+  // Fetch all teams (no pagination/search for sidebar)
+  const { teams, isLoading: teamsLoading, error: teamsError } = useTeams({ page: 1, pageSize: 100 });
+  // Fetch all projects (no pagination/search for sidebar)
+  const { projects, isLoading: projectsLoading, error: projectsError } = useProjects({ page: 1, pageSize: 100 });
 
   const toggleTeam = (teamId: string) => {
     setExpandedTeams((prev) => ({
@@ -57,8 +58,33 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
 
   // Filter projects by team
   const getTeamProjects = (teamId: string) => {
-    return mockProjects.filter((project) => project.teamId === teamId);
+    return (projects || []).filter((project) => project.team_id === teamId);
   };
+
+  // Loading/Error states for teams/projects
+  if (teamsLoading || projectsLoading) {
+    return (
+      <div className="flex items-center justify-center h-full">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="h-12 w-12 rounded-full bg-primary-500 mb-4"></div>
+          <div className="h-4 w-32 bg-gray-300 dark:bg-gray-700 rounded"></div>
+        </div>
+      </div>
+    );
+  }
+  if (teamsError || projectsError) {
+    return (
+      <div className="text-center py-12">
+        <div className="mx-auto w-24 h-24 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
+          <Users size={48} className="text-red-600 dark:text-red-400" />
+        </div>
+        <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-1">Error loading sidebar data</h3>
+        <p className="text-gray-500 dark:text-gray-400">
+          {teamsError instanceof Error ? teamsError.message : 'An unexpected error occurred'}
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="h-full flex flex-col bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700">
@@ -185,9 +211,8 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
                 <Plus size={14} />
               </button>
             </div>
-            
             <ul className="space-y-1">
-              {mockTeams.map((team) => (
+              {(teams || []).map((team) => (
                 <li key={team.id} className="px-1">
                   <div
                     className="flex items-center justify-between px-2 py-1.5 text-sm font-medium text-gray-700 rounded-md cursor-pointer hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700"
@@ -196,9 +221,7 @@ const Sidebar: React.FC<SidebarProps> = ({ onClose }) => {
                     <span>{team.name}</span>
                     <ChevronDown
                       size={16}
-                      className={`transition-transform ${
-                        expandedTeams[team.id] ? 'transform rotate-180' : ''
-                      }`}
+                      className={`transition-transform ${expandedTeams[team.id] ? 'transform rotate-180' : ''}`}
                     />
                   </div>
                   

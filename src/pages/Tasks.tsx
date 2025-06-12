@@ -1,32 +1,47 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Search, Filter, SortAsc, Grid, List, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
+import { Plus, Search, SortAsc, Grid, List, CheckCircle2, Clock, AlertTriangle } from 'lucide-react';
 import TaskCard from '../components/ui/TaskCard';
 import { useTasks } from '../hooks/useTasks';
 import { TaskStatus, TaskPriority } from '../types/task';
+
+const statusList: TaskStatus[] = ['todo', 'in-progress', 'review', 'done'];
 
 const Tasks: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<TaskStatus | 'all'>('all');
   const [priorityFilter, setPriorityFilter] = useState<TaskPriority | 'all'>('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const { tasks, isLoading, error } = useTasks();
-  
-  // Filter tasks based on search term and filters
-  const filteredTasks = tasks?.filter(task => {
-    const matchesSearch = task.title.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (task.description?.toLowerCase().includes(searchTerm.toLowerCase()));
-    const matchesStatus = statusFilter === 'all' || task.status === statusFilter;
-    const matchesPriority = priorityFilter === 'all' || task.priority === priorityFilter;
-    
-    return matchesSearch && matchesStatus && matchesPriority;
-  }) || [];
+  const [page, setPage] = useState(1);
+  const pageSize = 9;
+
+  // Reset page when filters/search change
+  React.useEffect(() => { setPage(1); }, [searchTerm, statusFilter, priorityFilter]);
+
+  const { tasks, isLoading, error } = useTasks({
+    page,
+    pageSize,
+    searchTerm: searchTerm.trim() || undefined,
+    status: statusFilter !== 'all' ? statusFilter : undefined,
+    // priority: priorityFilter !== 'all' ? priorityFilter : undefined, // Uncomment if backend supports priority filtering
+  });
 
   // Group tasks by status for stats
-  const taskStats = tasks?.reduce((acc, task) => {
-    acc[task.status] = (acc[task.status] || 0) + 1;
-    return acc;
-  }, {} as Record<TaskStatus, number>) || {};
+  const taskStats: Record<TaskStatus, number> = {
+    todo: 0,
+    'in-progress': 0,
+    review: 0,
+    done: 0
+  };
+  (tasks || []).forEach(task => {
+    if (task.status && statusList.includes(task.status as TaskStatus)) {
+      taskStats[task.status as TaskStatus]++;
+    }
+  });
+
+  // Pagination controls
+  const handlePrev = () => setPage((p) => Math.max(1, p - 1));
+  const handleNext = () => setPage((p) => p + 1);
 
   if (isLoading) {
     return (
@@ -83,7 +98,7 @@ const Tasks: React.FC = () => {
           <div>
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">To Do</p>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {taskStats.todo || 0}
+              {taskStats.todo}
             </p>
           </div>
         </div>
@@ -95,7 +110,7 @@ const Tasks: React.FC = () => {
           <div>
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">In Progress</p>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {taskStats['in-progress'] || 0}
+              {taskStats['in-progress']}
             </p>
           </div>
         </div>
@@ -107,7 +122,7 @@ const Tasks: React.FC = () => {
           <div>
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Review</p>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {taskStats.review || 0}
+              {taskStats.review}
             </p>
           </div>
         </div>
@@ -119,7 +134,7 @@ const Tasks: React.FC = () => {
           <div>
             <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Done</p>
             <p className="text-lg font-semibold text-gray-900 dark:text-white">
-              {taskStats.done || 0}
+              {taskStats.done}
             </p>
           </div>
         </div>
@@ -198,33 +213,41 @@ const Tasks: React.FC = () => {
       </div>
       
       {/* Tasks Grid */}
-      {filteredTasks.length > 0 ? (
-        <div className={`grid gap-4 ${
-          viewMode === 'grid' 
-            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-            : 'grid-cols-1'
-        }`}>
-          {filteredTasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={{
-                id: task.id,
-                title: task.title,
-                description: task.description || undefined,
-                status: task.status as TaskStatus,
-                priority: task.priority as TaskPriority,
-                dueDate: task.due_date || undefined,
-                assignees: task.assignees.map(assignee => ({
-                  id: assignee.user.id,
-                  name: assignee.user.name,
-                  avatar: assignee.user.avatar_url || undefined
-                })),
-                commentCount: 0, // We'll need to add this to the query
-                attachmentCount: 0 // We'll need to add this to the query
-              }}
-            />
-          ))}
-        </div>
+      {tasks && tasks.length > 0 ? (
+        <>
+          <div className={`grid gap-4 ${
+            viewMode === 'grid' 
+              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+              : 'grid-cols-1'
+          }`}>
+            {tasks.map((task) => (
+              <TaskCard
+                key={task.id}
+                task={{
+                  id: task.id,
+                  title: task.title,
+                  description: task.description || undefined,
+                  status: task.status as TaskStatus,
+                  priority: task.priority as TaskPriority,
+                  dueDate: task.due_date || undefined,
+                  assignees: task.assignees.map(assignee => ({
+                    id: assignee.user.id,
+                    name: assignee.user.name,
+                    avatar: assignee.user.avatar_url || undefined
+                  })),
+                  commentCount: 0, // We'll need to add this to the query
+                  attachmentCount: 0 // We'll need to add this to the query
+                }}
+              />
+            ))}
+          </div>
+          {/* Pagination Controls */}
+          <div className="flex justify-center mt-8 gap-4">
+            <button className="btn btn-secondary" onClick={handlePrev} disabled={page === 1}>Previous</button>
+            <span className="self-center">Page {page}</span>
+            <button className="btn btn-secondary" onClick={handleNext} disabled={!tasks || tasks.length < pageSize}>Next</button>
+          </div>
+        </>
       ) : (
         <div className="text-center py-12">
           <div className="mx-auto w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">

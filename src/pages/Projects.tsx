@@ -7,14 +7,17 @@ import { useProjects } from '../hooks/useProjects';
 const Projects: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
-  const { projects, isLoading, error } = useProjects();
-  
-  // Filter projects based on search term
-  const filteredProjects = projects?.filter(project => 
-    project.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    (project.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-    (project.team?.name.toLowerCase().includes(searchTerm.toLowerCase()))
-  ) || [];
+  const [page, setPage] = useState(1);
+  const pageSize = 9;
+  const { projects, isLoading, error } = useProjects({
+    page,
+    pageSize,
+    searchTerm: searchTerm.trim() || undefined
+  });
+
+  // Pagination controls
+  const handlePrev = () => setPage((p) => Math.max(1, p - 1));
+  const handleNext = () => setPage((p) => p + 1);
 
   if (isLoading) {
     return (
@@ -73,7 +76,10 @@ const Projects: React.FC = () => {
             className="input py-2 pl-10"
             placeholder="Search projects..."
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => {
+              setSearchTerm(e.target.value);
+              setPage(1); // Reset to first page on search
+            }}
           />
         </div>
         
@@ -116,32 +122,40 @@ const Projects: React.FC = () => {
       </div>
       
       {/* Project Grid */}
-      {filteredProjects.length > 0 ? (
-        <div className={`grid gap-6 ${
-          viewMode === 'grid' 
-            ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
-            : 'grid-cols-1'
-        }`}>
-          {filteredProjects.map((project) => (
-            <ProjectCard
-              key={project.id}
-              project={{
-                id: project.id,
-                name: project.name,
-                description: project.description || undefined,
-                teamName: project.team?.name || 'No Team',
-                progress: project.progress || 0,
-                dueDate: project.due_date,
-                taskCount: 0, // We'll need to add this to the query
-                teamMembers: project.team?.members?.map(member => ({
-                  id: member.user.id,
-                  name: member.user.name,
-                  avatar: member.user.avatar_url || undefined
-                })) || []
-              }}
-            />
-          ))}
-        </div>
+      {projects && projects.length > 0 ? (
+        <>
+          <div className={`grid gap-6 ${
+            viewMode === 'grid' 
+              ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
+              : 'grid-cols-1'
+          }`}>
+            {projects.map((project) => (
+              <ProjectCard
+                key={project.id || ''}
+                project={{
+                  id: project.id || '',
+                  name: project.name,
+                  description: project.description || undefined,
+                  teamName: project.team?.name || 'No Team',
+                  progress: project.progress || 0,
+                  dueDate: project.due_date,
+                  taskCount: project.taskCount ?? 0, // Use real task count
+                  teamMembers: project.team?.members?.map(member => ({
+                    id: member.user.id,
+                    name: member.user.name,
+                    avatar: member.user.avatar_url || undefined
+                  })) || []
+                }}
+              />
+            ))}
+          </div>
+          {/* Pagination Controls */}
+          <div className="flex justify-center mt-8 gap-4">
+            <button className="btn btn-secondary" onClick={handlePrev} disabled={page === 1}>Previous</button>
+            <span className="self-center">Page {page}</span>
+            <button className="btn btn-secondary" onClick={handleNext} disabled={!projects || projects.length < pageSize}>Next</button>
+          </div>
+        </>
       ) : (
         <div className="text-center py-12">
           <div className="mx-auto w-24 h-24 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-4">
