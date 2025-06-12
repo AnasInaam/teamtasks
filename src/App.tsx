@@ -16,6 +16,7 @@ import EditProject from './pages/EditProject';
 import Teams from './pages/Teams';
 import TeamDetails from './pages/TeamDetails';
 import CreateTeam from './pages/CreateTeam';
+import EditTeam from './pages/EditTeam';
 import Tasks from './pages/Tasks';
 import Calendar from './pages/Calendar';
 import KanbanBoard from './pages/KanbanBoard';
@@ -72,6 +73,7 @@ function App() {
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/new" element={<CreateTeam />} />
             <Route path="/teams/:id" element={<TeamDetails />} />
+            <Route path="/teams/:id/edit" element={<EditTeam />} />
             <Route path="/tasks" element={<Tasks />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/kanban/:projectId" element={<KanbanBoard />} />

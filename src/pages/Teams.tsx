@@ -8,15 +8,27 @@ const Teams: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [page, setPage] = useState(1);
   const pageSize = 9;
-  const { teams, isLoading, error } = useTeams({
+  const { teams, isLoading, error, deleteTeam } = useTeams({
     page,
     pageSize,
     searchTerm: searchTerm.trim() || undefined
   });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Pagination controls
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => p + 1);
+
+  // Delete handler
+  const handleDelete = async (teamId: string) => {
+    if (!window.confirm('Are you sure you want to delete this team? This action cannot be undone.')) return;
+    setDeletingId(teamId);
+    try {
+      await deleteTeam.mutateAsync(teamId);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -129,50 +141,66 @@ const Teams: React.FC = () => {
               : 'grid-cols-1'
           }`}>
             {teams.map((team) => (
-              <Link
-                key={team.id || ''}
-                to={`/teams/${team.id}`}
-                className="card hover:shadow-lg transition-shadow duration-300"
-              >
-                <div className="flex justify-between items-start mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                      {team.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {team.members?.[0]?.user?.name ? `Led by ${team.members[0].user.name}` : 'No leader assigned'}
+              <div key={team.id || ''} className="relative group">
+                <Link
+                  to={`/teams/${team.id}`}
+                  className="card hover:shadow-lg transition-shadow duration-300 block"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+                        {team.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        {team.members?.[0]?.user?.name ? `Led by ${team.members[0].user.name}` : 'No leader assigned'}
+                      </p>
+                    </div>
+                    <div className="bg-primary-100 dark:bg-primary-900/30 px-3 py-1 rounded-full text-xs font-medium text-primary-800 dark:text-primary-300">
+                      {team.members?.length || 0} members
+                    </div>
+                  </div>
+                  {team.description && (
+                    <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
+                      {team.description}
                     </p>
+                  )}
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex -space-x-2">
+                      {team.members?.slice(0, 3).map((member) => (
+                        <img
+                          key={member.user.id}
+                          src={member.user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.user.name)}&background=random`}
+                          alt={member.user.name}
+                          title={`${member.user.name} - ${member.user.role || 'Member'}`}
+                          className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800"
+                        />
+                      ))}
+                      {(team.members?.length || 0) > 3 && (
+                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400 border-2 border-white dark:border-gray-800">
+                          +{team.members!.length - 3}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="bg-primary-100 dark:bg-primary-900/30 px-3 py-1 rounded-full text-xs font-medium text-primary-800 dark:text-primary-300">
-                    {team.members?.length || 0} members
-                  </div>
+                </Link>
+                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                  <Link
+                    to={`/teams/${team.id}/edit`}
+                    className="btn btn-xs btn-secondary"
+                    title="Edit Team"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    className="btn btn-xs btn-danger"
+                    title="Delete Team"
+                    disabled={deletingId === team.id}
+                    onClick={() => handleDelete(team.id)}
+                  >
+                    {deletingId === team.id ? 'Deleting...' : 'Delete'}
+                  </button>
                 </div>
-                
-                {team.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 line-clamp-2">
-                    {team.description}
-                  </p>
-                )}
-                
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex -space-x-2">
-                    {team.members?.slice(0, 3).map((member) => (
-                      <img
-                        key={member.user.id}
-                        src={member.user.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.user.name)}&background=random`}
-                        alt={member.user.name}
-                        title={`${member.user.name} - ${member.user.role || 'Member'}`}
-                        className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-800"
-                      />
-                    ))}
-                    {(team.members?.length || 0) > 3 && (
-                      <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center text-xs font-medium text-gray-600 dark:text-gray-400 border-2 border-white dark:border-gray-800">
-                        +{team.members!.length - 3}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </Link>
+              </div>
             ))}
           </div>
           {/* Pagination Controls */}
