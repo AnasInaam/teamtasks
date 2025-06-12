@@ -24,6 +24,9 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import NotFound from './pages/NotFound';
 import EditTask from './pages/EditTask';
+import RequestPasswordReset from './pages/RequestPasswordReset';
+import ResetPassword from './pages/ResetPassword';
+import Profile from './pages/Profile';
 
 function App() {
   const location = useLocation();
@@ -62,6 +65,9 @@ function App() {
           <Route element={<AuthLayout />}>
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/auth/request-password-reset" element={<RequestPasswordReset />} />
+            <Route path="/auth/reset-password" element={<ResetPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
           </Route>
           
           {/* App Routes */}
@@ -79,6 +85,7 @@ function App() {
             <Route path="/tasks/:id/edit" element={<EditTask />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/kanban/:projectId" element={<KanbanBoard />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
           
           {/* 404 Route */}

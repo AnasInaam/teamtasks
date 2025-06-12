@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -28,26 +28,39 @@ type ProjectFormValues = z.infer<typeof projectSchema>;
 
 const CreateProject: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { createProject } = useProjects();
   const { teams, isLoading: teamsLoading } = useTeams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Get teamId from query string
+  const searchParams = new URLSearchParams(location.search);
+  const preselectedTeamId = searchParams.get('teamId') || '';
 
   const {
     register,
     handleSubmit,
     formState: { errors },
     watch,
+    setValue,
   } = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
     defaultValues: {
       name: '',
       description: '',
-      teamId: '',
+      teamId: preselectedTeamId,
       startDate: new Date().toISOString().split('T')[0],
       dueDate: '',
     },
   });
+
+  // If the user navigates to a different teamId, update the form
+  React.useEffect(() => {
+    if (preselectedTeamId) {
+      setValue('teamId', preselectedTeamId);
+    }
+  }, [preselectedTeamId, setValue]);
 
   const onSubmit = async (data: ProjectFormValues) => {
     try {

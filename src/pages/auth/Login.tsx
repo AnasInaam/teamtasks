@@ -114,15 +114,6 @@ const Login: React.FC = () => {
               Remember me
             </label>
           </div>
-          
-          <div>
-            <Link
-              to="/forgot-password"
-              className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400 dark:hover:text-primary-300"
-            >
-              Forgot password?
-            </Link>
-          </div>
         </div>
         
         <div>
@@ -156,6 +147,15 @@ const Login: React.FC = () => {
             Sign up now
           </Link>
         </p>
+        
+        <div className="flex items-center justify-between mt-4">
+          <Link
+            to="/auth/request-password-reset"
+            className="text-sm text-primary-600 hover:underline dark:text-primary-400"
+          >
+            Forgot password?
+          </Link>
+        </div>
       </div>
     </div>
   );
