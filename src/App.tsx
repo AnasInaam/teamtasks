@@ -12,6 +12,7 @@ import Dashboard from './pages/Dashboard';
 import Projects from './pages/Projects';
 import ProjectDetails from './pages/ProjectDetails';
 import CreateProject from './pages/CreateProject';
+import EditProject from './pages/EditProject';
 import Teams from './pages/Teams';
 import TeamDetails from './pages/TeamDetails';
 import CreateTeam from './pages/CreateTeam';
@@ -67,6 +68,7 @@ function App() {
             <Route path="/projects" element={<Projects />} />
             <Route path="/projects/new" element={<CreateProject />} />
             <Route path="/projects/:id" element={<ProjectDetails />} />
+            <Route path="/projects/:id/edit" element={<EditProject />} />
             <Route path="/teams" element={<Teams />} />
             <Route path="/teams/new" element={<CreateTeam />} />
             <Route path="/teams/:id" element={<TeamDetails />} />

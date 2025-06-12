@@ -9,15 +9,27 @@ const Projects: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [page, setPage] = useState(1);
   const pageSize = 9;
-  const { projects, isLoading, error } = useProjects({
+  const { projects, isLoading, error, deleteProject } = useProjects({
     page,
     pageSize,
     searchTerm: searchTerm.trim() || undefined
   });
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   // Pagination controls
   const handlePrev = () => setPage((p) => Math.max(1, p - 1));
   const handleNext = () => setPage((p) => p + 1);
+
+  // Delete handler
+  const handleDelete = async (projectId: string) => {
+    if (!window.confirm('Are you sure you want to delete this project? This action cannot be undone.')) return;
+    setDeletingId(projectId);
+    try {
+      await deleteProject.mutateAsync(projectId);
+    } finally {
+      setDeletingId(null);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -130,23 +142,41 @@ const Projects: React.FC = () => {
               : 'grid-cols-1'
           }`}>
             {projects.map((project) => (
-              <ProjectCard
-                key={project.id || ''}
-                project={{
-                  id: project.id || '',
-                  name: project.name,
-                  description: project.description || undefined,
-                  teamName: project.team?.name || 'No Team',
-                  progress: project.progress || 0,
-                  dueDate: project.due_date,
-                  taskCount: project.taskCount ?? 0, // Use real task count
-                  teamMembers: project.team?.members?.map(member => ({
-                    id: member.user.id,
-                    name: member.user.name,
-                    avatar: member.user.avatar_url || undefined
-                  })) || []
-                }}
-              />
+              <div key={project.id || ''} className="relative group">
+                <ProjectCard
+                  project={{
+                    id: project.id || '',
+                    name: project.name,
+                    description: project.description || undefined,
+                    teamName: project.team?.name || 'No Team',
+                    progress: project.progress || 0,
+                    dueDate: project.due_date || undefined, // Fix: ensure undefined, not null
+                    taskCount: project.taskCount ?? 0,
+                    teamMembers: project.team?.members?.map(member => ({
+                      id: member.user.id,
+                      name: member.user.name,
+                      avatar: member.user.avatar_url || undefined
+                    })) || []
+                  }}
+                />
+                <div className="absolute top-2 right-2 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Link
+                    to={`/projects/${project.id}/edit`}
+                    className="btn btn-xs btn-secondary"
+                    title="Edit Project"
+                  >
+                    Edit
+                  </Link>
+                  <button
+                    className="btn btn-xs btn-danger"
+                    title="Delete Project"
+                    disabled={deletingId === project.id}
+                    onClick={() => handleDelete(project.id)}
+                  >
+                    {deletingId === project.id ? 'Deleting...' : 'Delete'}
+                  </button>
+                </div>
+              </div>
             ))}
           </div>
           {/* Pagination Controls */}
